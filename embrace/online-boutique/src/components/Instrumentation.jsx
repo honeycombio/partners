@@ -20,6 +20,21 @@ const rumResource = resourceFromAttributes({
 })
 
 /**
+ * default configuration for the OpenTelemetry instrumentation
+ * network events are not ignored,
+ * urls for sending traces and logs to Honeycomb are ignored
+ * headers for the CORS requests are allowed for all domains
+ * (you can set this to https://workshop.honeydemo.io)
+ */
+const configDefaults = {
+  ignoreNetworkEvents: false,
+  ignoreUrls: [/otlp\/v1\/(traces|logs)/],
+  propagateTraceHeaderCorsUrls: [
+    /.+/g,        // regex to match your backend urls. update to the domains you wish to include.
+  ]
+}
+
+/**
  * Embrace disables network span forwarding by default (networkSpansForwardingThreshold: 0).
  * In that case it passes propagator: null into WebTracerProvider.register(), and the web SDK
  * treats null as "do not install a global propagator" — so fetch/XHR never get traceparent/baggage.
@@ -119,12 +134,8 @@ function startEmbraceInstrumentation() {
     resource: rumResource,
     // propagator: w3cPropagator,
     defaultInstrumentationConfig: {
-      '@opentelemetry/instrumentation-fetch': {
-        ignoreUrls: [/otlp\/v1\/(traces|logs)/],
-      },
-      '@opentelemetry/instrumentation-xml-http-request': {
-        ignoreUrls: [/otlp\/v1\/(traces|logs)/],
-      },
+      '@opentelemetry/instrumentation-fetch': configDefaults,
+      '@opentelemetry/instrumentation-xml-http-request': configDefaults,
     },
     ...(spanExporters.length ? { spanExporters, logExporters } : {}),
   })
