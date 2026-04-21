@@ -1,10 +1,5 @@
 import { useEffect } from 'react'
 import { initSDK } from '@embrace-io/web-sdk'
-import {
-  CompositePropagator,
-  W3CBaggagePropagator,
-  W3CTraceContextPropagator,
-} from '@opentelemetry/core'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
@@ -33,20 +28,6 @@ const configDefaults = {
     /.+/g,        // regex to match your backend urls. update to the domains you wish to include.
   ]
 }
-
-/**
- * Embrace disables network span forwarding by default (networkSpansForwardingThreshold: 0).
- * In that case it passes propagator: null into WebTracerProvider.register(), and the web SDK
- * treats null as "do not install a global propagator" — so fetch/XHR never get traceparent/baggage.
- * Supplying W3C propagators restores context injection for same-origin (and allowed cross-origin) requests.
- *
- * Note: full document navigations (plain <form> POST / <a href>) do not go through fetch; the browser
- * does not attach traceparent. Only fetch/XHR (and navigations that include the header by other means)
- * can join the RUM trace to the server.
- */
-const w3cPropagator = new CompositePropagator({
-  propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
-})
 
 /**
  * export Embrace telemetry to Honeycomb.
@@ -132,7 +113,6 @@ function startEmbraceInstrumentation() {
     appVersion: EMBRACE_APP_VERSION,
     dynamicSDKConfigManager: createLocalOnlyDynamicConfigManager(),
     resource: rumResource,
-    // propagator: w3cPropagator,
     defaultInstrumentationConfig: {
       '@opentelemetry/instrumentation-fetch': configDefaults,
       '@opentelemetry/instrumentation-xml-http-request': configDefaults,
