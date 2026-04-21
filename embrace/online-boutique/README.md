@@ -55,4 +55,62 @@ For a static deployment **without** Express or a reverse proxy, build with `VITE
 
 ## Relationship to `microservices-demo`
 
-This project was extracted from `src/frontend/spa` in [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo): same screens, theme, and API usage, without the in-repo Go bootstrap script, Honeycomb browser SDK, or Capacitor native shells—so participants can run this repository in isolation against any reachable boutique frontend.
+This project was extracted from `src/frontend/spa` in [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo): same screens, theme, and API usage, without the in-repo Go bootstrap script or Honeycomb browser SDK—so participants can run this repository in isolation against any reachable boutique frontend.
+
+## Mobile apps (iOS and Android)
+
+The **same** Vite/React UI is embedded with [Capacitor](https://capacitorjs.com/) in `ios/` and `android/`. The look and feel match the web app (React Native Web + shared theme).
+
+### Prerequisites
+
+- **All platforms:** Node 20+, `npm install`, configured `.env` (see above).
+- **iOS:** macOS, Xcode, CocoaPods (`sudo gem install cocoapods` or via Homebrew). If `pod install` fails with a Unicode / `ASCII-8BIT` error, use a UTF-8 locale (for example `export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` before `npx cap sync` or `pod install`).
+- **Android:** Android Studio, Android SDK, a device or emulator.
+
+### Required env for mobile builds
+
+Native WebViews are not served from your boutique host, so builds **must** bake in a real boutique base URL:
+
+| Variable | Required for mobile | Description |
+|----------|---------------------|-------------|
+| `VITE_FRONTEND_ORIGIN` | Yes | HTTPS base URL of the Online Boutique **frontend** (same as used for `/api` and `/static`). |
+| `VITE_FRONTEND_API_KEY` | Yes | Same as `FRONTEND_API_KEY` on the boutique frontend. |
+
+The boutique must **allow CORS** from your app’s WebView origin (Capacitor typically uses origins such as `capacitor://localhost` on iOS and `https://localhost` on Android). If calls fail with CORS errors, adjust the upstream frontend or proxy.
+
+### Build and run
+
+From this directory:
+
+```bash
+npm install
+npm run build
+npx cap sync
+```
+
+Open a native IDE and run on a simulator or device:
+
+```bash
+npm run cap:open:ios       # Xcode
+npm run cap:open:android   # Android Studio
+```
+
+Or in one step after changing web assets:
+
+```bash
+npm run build:mobile
+```
+
+**Workflow:** edit the React app → `npm run build` (or `build:mobile`) → `npx cap sync` → run from Xcode/Android Studio.
+
+### Regenerating native projects
+
+If `ios/` or `android/` are missing (for example after a clean clone), run:
+
+```bash
+npm install
+npm run build
+npx cap add ios
+npx cap add android
+npx cap sync
+```

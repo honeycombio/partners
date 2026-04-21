@@ -1,11 +1,19 @@
+import { Capacitor } from '@capacitor/core'
+
 /**
  * Resolve the Online Boutique frontend base URL (same host that serves `/api/v1` and `/static`).
  *
  * By default the app uses the **current page origin** so `/api` and `/static` hit Vite’s dev/preview
  * proxy and avoid browser CORS. Set `VITE_RELATIVE_API=false` and `VITE_FRONTEND_ORIGIN` only when
  * deploying a static build that must call the boutique host directly (CORS must allow your origin).
+ *
+ * **Capacitor (iOS/Android):** the WebView origin is not the boutique host, so the client always
+ * uses `VITE_FRONTEND_ORIGIN` for API and static assets (CORS on the boutique must allow the app).
  */
 function useSameOriginApi() {
+  if (Capacitor.isNativePlatform()) {
+    return false
+  }
   const v = import.meta.env.VITE_RELATIVE_API
   return v !== 'false'
 }

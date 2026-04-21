@@ -4,3 +4,15 @@ dist
 .env
 .env.local
 .env.*.local
+
+# Capacitor native (keep project files; ignore local build outputs)
+ios/App/Pods
+ios/App/build
+ios/**/*.xcworkspace/xcuserdata
+ios/**/*.xcodeproj/xcuserdata
+android/.gradle
+android/app/build
+android/build
+android/captures
+android/local.properties
+*.jks
