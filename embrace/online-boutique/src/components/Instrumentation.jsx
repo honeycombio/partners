@@ -34,8 +34,7 @@ const w3cPropagator = new CompositePropagator({
 })
 
 /**
- * When window.__OTEL_BROWSER_EXPORT__ is set (handlers.go), export Embrace telemetry to Honeycomb.
- * Uses same-origin /otlp/v1/* proxy (server adds API key) so gzip + Content-Encoding is not blocked by Honeycomb CORS.
+ * export Embrace telemetry to Honeycomb.
  */
 function resolveOtlpUrl(urlOrPath) {
   if (typeof window === 'undefined' || !urlOrPath) {
@@ -47,8 +46,11 @@ function resolveOtlpUrl(urlOrPath) {
   return new URL(String(urlOrPath), window.location.origin).href
 }
 
+/**
+ * setup the exporters for Honeycomb, for logs and traces
+ * @returns 
+ */
 function buildHoneycombOtlpExporters() {
-
   const headers = {};
   const tracesUrl = resolveOtlpUrl('https://workshop.honeydemo.io/v1/traces')
   const logsUrl = resolveOtlpUrl('https://workshop.honeydemo.io/v1/logs')
