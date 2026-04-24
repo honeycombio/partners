@@ -15,64 +15,6 @@ const rumResource = resourceFromAttributes({
 })
 
 /**
- * default configuration for the OpenTelemetry instrumentation
- * network events are not ignored,
- * urls for sending traces and logs to Honeycomb are ignored
- * headers for the CORS requests are allowed for all domains
- * (you can set this to https://workshop.honeydemo.io)
- */
-const configDefaults = {
-  ignoreNetworkEvents: false,
-  ignoreUrls: [/otlp\/v1\/(traces|logs)/],
-  propagateTraceHeaderCorsUrls: [
-    /.+/g,        // regex to match your backend urls. update to the domains you wish to include.
-  ]
-}
-
-/**
- * export Embrace telemetry to Honeycomb.
- */
-function resolveOtlpUrl(urlOrPath) {
-  if (typeof window === 'undefined' || !urlOrPath) {
-    return urlOrPath
-  }
-  if (String(urlOrPath).startsWith('http://') || String(urlOrPath).startsWith('https://')) {
-    return String(urlOrPath)
-  }
-  return new URL(String(urlOrPath), window.location.origin).href
-}
-
-/**
- * setup the exporters for Honeycomb, for logs and traces
- * @returns 
- */
-function buildHoneycombOtlpExporters() {
-  const headers = {};
-  const tracesUrl = resolveOtlpUrl('https://workshop.honeydemo.io/v1/traces')
-  const logsUrl = resolveOtlpUrl('https://workshop.honeydemo.io/v1/logs')
-  // Embrace wires createOtlpNetworkExportDelegate without merging OTel defaults; without
-  // timeoutMillis, transport uses AbortSignal.timeout(undefined) and export throws.
-  const timeoutMillis = 10000
-
-  return {
-    spanExporters: [
-      new OTLPTraceExporter({
-        url: tracesUrl,
-        headers,
-        timeoutMillis,
-      }),
-    ],
-    logExporters: [
-      new OTLPLogExporter({
-        url: logsUrl,
-        headers,
-        timeoutMillis,
-      }),
-    ],
-  }
-}
-
-/**
  * Embrace’s default config manager fetches `https://a-<appId>.config.emb-api.com/v2/config`.
  * That response has been observed to include duplicate `Access-Control-Allow-Origin`
  * values (`*, *`), which browsers reject — the failure is on the API side, not fixable
@@ -106,25 +48,15 @@ function startEmbraceInstrumentation() {
   }
   embraceInstrumentationStarted = true
 
-  const { spanExporters, logExporters } = buildHoneycombOtlpExporters()
-
   const result = initSDK({
     appID: EMBRACE_APP_ID,
     appVersion: EMBRACE_APP_VERSION,
     dynamicSDKConfigManager: createLocalOnlyDynamicConfigManager(),
     resource: rumResource,
-    defaultInstrumentationConfig: {
-      '@opentelemetry/instrumentation-fetch': configDefaults,
-      '@opentelemetry/instrumentation-xml-http-request': configDefaults,
-    },
-    ...(spanExporters.length ? { spanExporters, logExporters } : {}),
   })
 
   if (result) {
     console.log('Successfully initialized the Embrace SDK')
-    if (spanExporters.length) {
-      console.log('Also exporting OTLP traces/logs to Honeycomb (via same-origin proxy when configured)')
-    }
   } else {
     console.log('Failed to initialize the Embrace SDK')
   }
