@@ -53,6 +53,11 @@ function startEmbraceInstrumentation() {
     appVersion: EMBRACE_APP_VERSION,
     dynamicSDKConfigManager: createLocalOnlyDynamicConfigManager(),
     resource: rumResource,
+    defaultInstrumentationConfig: {
+      'web-vital': {
+        trackingLevel: 'all',     // capture LCP, INP, CLS, FCP
+      }
+    },
   })
 
   if (result) {
