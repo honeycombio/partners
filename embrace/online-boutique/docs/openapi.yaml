@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: Online Boutique JSON API (as used by embrace/online-boutique)
+  description: |
+    Public JSON API exposed by the **Online Boutique frontend** service
+    ([GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo)).
+    This specification documents only the routes and shapes that the **embrace/online-boutique**
+    React app calls.
+
+    **Base URL:** Same origin as the boutique frontend (e.g. `https://boutique.example.com`).
+    Paths are always prefixed with `/api/v1`.
+
+    **Static assets** (not part of this OpenAPI surface): product images and branding are loaded via
+    ordinary `GET` requests to `/static/...` on the same host. See `src/utils/assets.js`.
+
+    **Authoritative upstream:** For behavior beyond what this client uses, refer to the boutique
+    frontend README and handlers in the microservices-demo repo.
+  version: 1.0.0
+
+servers:
+  - url: "{scheme}://{host}"
+    description: Boutique frontend host (no trailing slash). In dev, the Vite/Express app may relay `/api` here.
+    variables:
+      scheme:
+        default: https
+        enum:
+          - https
+          - http
+      host:
+        default: 127.0.0.1:8080
+        description: e.g. workshop host or local frontend pod
+
+security:
+  - BearerAuth: []
+    SessionId: []
+    CurrencyHeader: []
+
+tags:
+  - name: Products
+  - name: Cart
+  - name: Orders
+  - name: Session
+  - name: Ads
+  - name: Currencies
+
+paths:
+  /api/v1/products:
+    get:
+      tags: [Products]
+      summary: List products for home grid
+      operationId: listProducts
+      responses:
+        "200":
+          description: Product rows for storefront
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+              example:
+                products:
+                  - product:
+                      id: "OLJCESPC7Z"
+                      name: "Vintage Typewriter"
+                      picture: "/static/img/products/typewriter.jpg"
+                    price:
+                      currencyCode: USD
+                      units: 67
+                      nanos: 990000000
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/v1/products/search:
+    get:
+      tags: [Products]
+      summary: Search products by query string
+      operationId: searchProducts
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search text (URL-encoded in the client)
+          schema:
+            type: string
+          example: typewriter
+      responses:
+        "200":
+          description: Matching product rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductListResponse"
+              example:
+                products:
+                  - product:
+                      id: "OLJCESPC7Z"
+                      name: "Vintage Typewriter"
+                      picture: "/static/img/products/typewriter.jpg"
+                    price:
+                      currencyCode: USD
+                      units: 67
+                      nanos: 990000000
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /api/v1/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get one product with recommendations
+      operationId: getProduct
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: OLJCESPC7Z
+      responses:
+        "200":
+          description: Product detail and optional recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetailResponse"
+              example:
+                product:
+                  id: "OLJCESPC7Z"
+                  name: "Vintage Typewriter"
+                  description: "Be productive like it was 1959."
+                  picture: "/static/img/products/typewriter.jpg"
+                price:
+                  currencyCode: USD
+                  units: 67
+                  nanos: 990000000
+                recommendations:
+                  - product:
+                      id: "66VCHSJNUP"
+                      name: "Vintage Camera Lens"
+                      picture: "/static/img/products/camera-lens.jpg"
+                    price:
+                      currencyCode: USD
+                      units: 12
+                      nanos: 490000000
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBody"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/cart:
+    get:
+      tags: [Cart]
+      summary: Get current cart for session
+      operationId: getCart
+      responses:
+        "200":
+          description: Cart with line items and totals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+              example:
+                cart_item_count: 2
+                items:
+                  - product:
+                      id: "OLJCESPC7Z"
+                      name: "Vintage Typewriter"
+                      picture: "/static/img/products/typewriter.jpg"
+                    quantity: 1
+                    price:
+                      currencyCode: USD
+                      units: 67
+                      nanos: 990000000
+                shipping_cost:
+                  currencyCode: USD
+                  units: 8
+                  nanos: 990000000
+                total_cost:
+                  currencyCode: USD
+                  units: 76
+                  nanos: 980000000
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      tags: [Cart]
+      summary: Empty the cart
+      operationId: emptyCart
+      responses:
+        "200":
+          description: Cart cleared (exact body depends on upstream)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/cart/items:
+    post:
+      tags: [Cart]
+      summary: Add line item (or adjust quantity per upstream rules)
+      operationId: addCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCartItemRequest"
+            example:
+              product_id: OLJCESPC7Z
+              quantity: 1
+      responses:
+        "200":
+          description: Success (client refreshes cart with GET /api/v1/cart)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          description: Invalid product or quantity
+
+  /api/v1/orders:
+    post:
+      tags: [Orders]
+      summary: Place order from current cart
+      operationId: placeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceOrderRequest"
+            example:
+              email: someone@example.com
+              street_address: "1600 Amphitheatre Parkway"
+              zip_code: 94043
+              city: "Mountain View"
+              state: CA
+              country: "United States"
+              credit_card_number: "4432808768013908"
+              credit_card_expiration_month: 1
+              credit_card_expiration_year: 2030
+              credit_card_cvv: 672
+      responses:
+        "200":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceOrderResponse"
+              example:
+                order:
+                  orderId: "505a-f545-cdcc-4f7b"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          description: Validation or payment simulation failure
+
+  /api/v1/session/currency:
+    post:
+      tags: [Session]
+      summary: Persist currency preference for session (optional; client also sends X-Currency)
+      operationId: setSessionCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currency_code]
+              properties:
+                currency_code:
+                  type: string
+                  example: EUR
+      responses:
+        "200":
+          description: Preference updated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/ads:
+    get:
+      tags: [Ads]
+      summary: Fetch hero / banner ad copy
+      operationId: getAd
+      responses:
+        "200":
+          description: Optional ad payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ad:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+              example:
+                ad:
+                  text: "Don’t forget—you can try Honeycomb for free with our welcome bonus!"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/currencies:
+    get:
+      tags: [Currencies]
+      summary: List supported currency codes
+      operationId: listCurrencies
+      responses:
+        "200":
+          description: ISO-style currency codes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      type: string
+              example:
+                currencies:
+                  - USD
+                  - EUR
+                  - GBP
+                  - JPY
+                  - CAD
+                  - TRY
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: |
+        Same secret as `FRONTEND_API_KEY` on the boutique frontend.
+        The React app sets `VITE_FRONTEND_API_KEY` and sends `Authorization: Bearer <key>`.
+    SessionId:
+      type: apiKey
+      in: header
+      name: X-Session-Id
+      description: |
+        Opaque session id. Generated client-side (localStorage key `ob_embrace_session_id`), 16 hex chars when `crypto.randomUUID` is available.
+    CurrencyHeader:
+      type: apiKey
+      in: header
+      name: X-Currency
+      description: |
+        Active currency code (e.g. `USD`). Client default `USD`; user can change via currency dropdown.
+        Stored in localStorage as `ob_embrace_currency`.
+
+  schemas:
+    Money:
+      type: object
+      description: |
+        Money amounts follow the boutique JSON shape. The client formatter accepts `currencyCode` or `currency_code`,
+        and `units` as number or string; `nanos` is fractional units (nanos / 1e9).
+      properties:
+        currencyCode:
+          type: string
+        currency_code:
+          type: string
+        units:
+          oneOf:
+            - type: integer
+            - type: string
+        nanos:
+          type: integer
+      example:
+        currencyCode: USD
+        units: 12
+        nanos: 490000000
+
+    ProductRef:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        picture:
+          type: string
+          description: Path under `/static/...` resolved against boutique origin
+        description:
+          type: string
+
+    ProductRow:
+      type: object
+      properties:
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        price:
+          $ref: "#/components/schemas/Money"
+
+    ProductListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductRow"
+
+    ProductDetailResponse:
+      type: object
+      properties:
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        price:
+          $ref: "#/components/schemas/Money"
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductRow"
+
+    CartLineItem:
+      type: object
+      properties:
+        product:
+          $ref: "#/components/schemas/ProductRef"
+        quantity:
+          type: integer
+        price:
+          $ref: "#/components/schemas/Money"
+
+    Cart:
+      type: object
+      properties:
+        cart_item_count:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartLineItem"
+        shipping_cost:
+          $ref: "#/components/schemas/Money"
+        total_cost:
+          $ref: "#/components/schemas/Money"
+
+    AddCartItemRequest:
+      type: object
+      required: [product_id, quantity]
+      properties:
+        product_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    PlaceOrderRequest:
+      type: object
+      required:
+        - email
+        - street_address
+        - zip_code
+        - city
+        - state
+        - country
+        - credit_card_number
+        - credit_card_expiration_month
+        - credit_card_expiration_year
+        - credit_card_cvv
+      properties:
+        email:
+          type: string
+        street_address:
+          type: string
+        zip_code:
+          type: integer
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        credit_card_number:
+          type: string
+        credit_card_expiration_month:
+          type: integer
+        credit_card_expiration_year:
+          type: integer
+        credit_card_cvv:
+          type: integer
+
+    PlaceOrderResponse:
+      type: object
+      properties:
+        order:
+          type: object
+          properties:
+            orderId:
+              type: string
+            order_id:
+              type: string
+          description: Client accepts either camelCase or snake_case id.
+
+    ErrorBody:
+      type: object
+      properties:
+        error:
+          type: string
+      description: |
+        On non-OK responses, the client prefers `error` as the user-facing message
+        (`src/api/client.js`).
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key
+    ServerError:
+      description: Upstream failure
