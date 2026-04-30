@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { initSDK } from '@embrace-io/web-sdk'
-import { resourceFromAttributes } from '@opentelemetry/resources'
 
 const EMBRACE_APP_ID = '2disg'
 const EMBRACE_APP_VERSION = '1.0.0'
