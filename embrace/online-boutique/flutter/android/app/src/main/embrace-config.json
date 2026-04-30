@@ -1,0 +1,8 @@
+{
+  "app_id": "2disg",
+  "api_token": "YOUR_EMBRACE_ANDROID_API_TOKEN",
+  "ndk_enabled": true,
+  "sdk_config": {
+    "app_framework": "flutter"
+  }
+}

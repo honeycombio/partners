@@ -1,18 +1,9 @@
 import { useEffect } from 'react'
 import { initSDK } from '@embrace-io/web-sdk'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 
 const EMBRACE_APP_ID = '2disg'
 const EMBRACE_APP_VERSION = '1.0.0'
-
-/** Merged with Embrace’s built-in web resource; attached to all spans and log records from this SDK. */
-const rumResource = resourceFromAttributes({
-  frontend_sdk: 'embrace',
-  embrace_app_id: EMBRACE_APP_ID,
-  embrace_app_version: EMBRACE_APP_VERSION,
-})
 
 /**
  * Embrace’s default config manager fetches `https://a-<appId>.config.emb-api.com/v2/config`.
@@ -52,12 +43,6 @@ function startEmbraceInstrumentation() {
     appID: EMBRACE_APP_ID,
     appVersion: EMBRACE_APP_VERSION,
     dynamicSDKConfigManager: createLocalOnlyDynamicConfigManager(),
-    resource: rumResource,
-    defaultInstrumentationConfig: {
-      'web-vital': {
-        trackingLevel: 'all',     // capture LCP, INP, CLS, FCP
-      }
-    },
   })
 
   if (result) {
