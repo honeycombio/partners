@@ -36,8 +36,9 @@ Locate and narrow potential issues for an application with **frontend and backen
 
 Treat the outcome as iterative: hypotheses, evidence from each MCP, then refine until a plausible root cause is supported by both sides when correlation is needed.
 
-## Important Honeycomb dataset
+## Important Honeycomb environment and dataset
 
+- **Primary environment (required): ** `Honeycomb Workshop`
 - **Primary dataset (required):** `ms_demo_honoeycomb_+_embrace-web-development`
 - **Do not use** the `browser` dataset for this integrated frontend story: it is a **standalone** web frontend, **not** the frontend integrated with Embrace for this demo.
 
