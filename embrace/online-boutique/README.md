@@ -1,6 +1,11 @@
 # Embrace — Online Boutique workshop client
 
-Standalone **JavaScript** + **React Native** (via [react-native-web](https://necolas.github.io/react-native-web/)) + **Vite** app that drives the [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) Online Boutique **only through the public JSON API** (`/api/v1/*`), matching the look and feel of the original SPA under `src/frontend/spa`.
+This repo includes two clients for the [microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo) Online Boutique **frontend** JSON API (`/api/v1/*`) and **`/static`** assets:
+
+1. **`src/`** — **JavaScript** + **React Native Web** + **Vite** app (and optional **Capacitor** shells under `ios/` / `android/`), matching the original SPA under `src/frontend/spa`.
+2. **`flutter/`** — **Flutter** app (iOS, Android, web) with the same screens and API behavior. The Dart package name is `online_boutique_flutter`.
+
+See also **`docs/openapi.yaml`** for the JSON routes and request shapes used by both clients.
 
 ## What this app does
 
@@ -9,7 +14,8 @@ Standalone **JavaScript** + **React Native** (via [react-native-web](https://nec
 
 ## Prerequisites
 
-- Node.js 20+
+- **Vite/React app:** Node.js 20+
+- **Flutter app:** [Flutter SDK](https://docs.flutter.dev/get-started/install) (see **`flutter/`** section below)
 - A running Online Boutique deployment whose **frontend** service exposes `/api/v1` and `/static`, with `FRONTEND_API_KEY` set.
 
 ## Configuration
@@ -52,6 +58,54 @@ npm start
 Alternatively, `npm run preview` serves the build with Vite’s preview server (default port `4173`) and the configured proxy.
 
 For a static deployment **without** Express or a reverse proxy, build with `VITE_RELATIVE_API=false` and `VITE_FRONTEND_ORIGIN` set so the client calls the boutique directly (CORS must allow your app’s origin).
+
+## Flutter app (`flutter/`)
+
+A native **Flutter** implementation lives under **`flutter/`**. It calls the same endpoints as the React app (`/api/v1/products`, cart, checkout, session currency, ads, etc.) and mirrors the main UI flows (home grid, search, cart, product detail, currency dropdown, cart badge).
+
+### Prerequisites
+
+- **[Flutter SDK](https://docs.flutter.dev/get-started/install)** on stable; **`flutter doctor`** clean for your targets.
+- The shared boutique **frontend** ( **`/api/v1`**, **`/static`**, **`FRONTEND_API_KEY`** ) as in the top-level **Prerequisites**.
+
+### Configuration
+
+Configuration is loaded from **`flutter/assets/app_config.env`** (bundled as a Flutter asset). You can override values with **`--dart-define=KEY=value`**.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `FRONTEND_API_KEY` | Yes | Same value as **`FRONTEND_API_KEY`** / **`VITE_FRONTEND_API_KEY`** on the boutique frontend. |
+| `FRONTEND_ORIGIN` | **Yes** for iOS/Android | HTTPS base URL of the boutique **frontend** (no trailing slash), e.g. `https://workshop.honeydemo.io`. **Web:** if empty, the app uses **`Uri.base.origin`** (same-tab origin), which is convenient for local `flutter run -d chrome` when your dev server can proxy API/static—otherwise set this to the real boutique URL (CORS must allow your origin). |
+
+The workspace **`.env`** at the repo root is used by the Node/Vite app only; Flutter does not read it unless you copy values into **`flutter/assets/app_config.env`**.
+
+### Run
+
+From **`flutter/`**:
+
+```bash
+cd flutter
+flutter pub get
+flutter run                    # default device
+flutter run -d chrome          # web
+flutter run -d ios             # iOS simulator (macOS)
+flutter run -d android         # Android emulator or device
+```
+
+### Web notes
+
+- The official **`embrace`** **Flutter** plugin targets **iOS and Android only**, not **`flutter build web`**. For **browser** telemetry with Embrace, use the **`@embrace-io/web-sdk`** approach (see **`src/components/Instrumentation.jsx`**) in a host page or a parallel web deployment—but the stock **`flutter/web/index.html`** does not bundle that SDK by default.
+- Product images on **`flutter run -d chrome`** use an HTML **`<img>`**-based loader so cross-origin static files are not blocked the same way as **`Image.network`** (fetch/CORS). Mobile still uses normal Flutter image loading.
+
+### Embrace (Flutter, mobile)
+
+For **iOS** and **Android**, the Flutter tree includes **Embrace** wiring (app id **`2disg`**, aligned with the React instrumented app):
+
+- **Android:** `flutter/android/app/src/main/embrace-config.json` — set a real **`api_token`** from the Embrace dashboard; **`MyApplication`** starts the native SDK; the **Embrace Gradle** plugin and **`embrace-config.json`** must be valid for release/debug builds you care about.
+- **iOS:** `flutter/ios/Runner/AppDelegate.swift` — **`Embrace.setup`** / **`platform: .flutter`**; **`Podfile`** sets **`platform :ios, '13.0'`** for the Embrace pod.
+- **Dart:** `Embrace.instance.start` wraps app startup in **`flutter/lib/main.dart`** on non-web platforms; **`GoRouter`** uses **`EmbraceNavigationObserver`** on mobile.
+
+Background the app after testing so sessions can upload. See [Embrace Flutter docs](https://embrace.io/docs/flutter/integration/) for dashboard setup, symbol upload, and upgrades.
 
 ## Relationship to `microservices-demo`
 

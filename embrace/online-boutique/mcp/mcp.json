@@ -1,0 +1,18 @@
+{
+    "mcpServers": {
+      "embrace-workshop": {
+        "type": "http",
+        "url": "https://mcp.embrace.io/mcp",
+        "headers": {
+          "Authorization": "Bearer emb_sa_HAoIqSI8lBf-v9ilqxIeVp0lpu2nLKB4r6yUrdU0dgI"
+        }
+      },
+      "honeycomb-workshop": {
+        "type": "http",
+        "url": "https://mcp.honeycomb.io/mcp",
+        "headers": {
+          "Authorization": "Bearer hcamk_01kq8rht5z0qr8w3yrw4gnjqfa:7chgfv6hcr2r7twfjbcdnkxyz2q14zkc"
+        }
+      }
+    }
+  }
