@@ -1,0 +1,18 @@
+{
+    "mcpServers": {
+      "embrace-workshop": {
+        "type": "http",
+        "url": "https://mcp.embrace.io/mcp",
+        "headers": {
+          "Authorization": "Bearer <embrace-mcp-api-key>"
+        }
+      },
+      "honeycomb-workshop": {
+        "type": "http",
+        "url": "https://mcp.honeycomb.io/mcp",
+        "headers": {
+          "Authorization": "Bearer <honeycomb-mcp-api-key>"
+        }
+      }
+    }
+  }

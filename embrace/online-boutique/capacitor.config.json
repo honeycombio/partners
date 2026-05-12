@@ -1,0 +1,15 @@
+{
+  "appId": "io.honeycomb.embrace.onlineboutique",
+  "appName": "Online Boutique",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
