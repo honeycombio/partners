@@ -25,7 +25,7 @@ export default function SearchScreen() {
   const run = () => {
     const query = q.trim()
     if (!query) {
-      setRows([])
+      setRows(null)
       return
     }
     setLoading(true)

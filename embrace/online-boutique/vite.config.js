@@ -30,5 +30,8 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       proxy,
     },
+    build: {
+      sourcemap: true,
+    }
   }
 })
