@@ -175,6 +175,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bg,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
+    // Sit above adBar / brandBar so the currency dropdown (absolute, overflows downward)
+    // is not painted underneath later siblings (same DOM order wins without this).
+    position: 'relative',
+    zIndex: 100,
   },
   ship: { fontSize: 13, fontWeight: '500', color: theme.text, flex: 1 },
   adBar: {
