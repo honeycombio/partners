@@ -95,9 +95,7 @@ function CurrencyControl() {
       .then((d) => {
         const c = /** @type {{ currencies?: string[] }} */ (d).currencies
         if (c?.length) {
-          const list = [...c]
-          if (!list.includes('KRW')) list.push('KRW')
-          setCodes(list)
+          setCodes(c)
         }
       })
       .catch(() => {
