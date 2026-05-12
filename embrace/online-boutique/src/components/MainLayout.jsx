@@ -95,7 +95,10 @@ function CurrencyControl() {
       .then((d) => {
         const c = /** @type {{ currencies?: string[] }} */ (d).currencies
         if (c?.length) {
-          setCodes(c)
+          const list = [...c]
+          if (!list.includes('HNY')) list.push('HNY')
+          if (!list.includes('EMB')) list.push('EMB')
+          setCodes(list)
         }
       })
       .catch(() => {
