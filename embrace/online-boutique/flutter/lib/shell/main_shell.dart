@@ -189,7 +189,9 @@ class _CurrencyControlState extends State<_CurrencyControl> {
       final d = await api.get('/api/v1/currencies', sessionId: session.sessionId, currency: session.currency);
       if (d is Map && d['currencies'] is List && mounted) {
         setState(() {
-          _codes = (d['currencies'] as List).map((e) => e.toString()).toList();
+          final list = (d['currencies'] as List).map((e) => e.toString()).toList();
+          if (!list.contains('KRW')) list.add('KRW');
+          _codes = list;
         });
       }
     } catch (_) {
