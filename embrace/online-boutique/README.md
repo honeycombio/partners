@@ -29,6 +29,7 @@ Copy `.env.example` to `.env` and set:
 | `VITE_PROXY_TARGET` | No | Alternate upstream if `VITE_FRONTEND_ORIGIN` is unset. |
 | `VITE_RELATIVE_API` | No | Default (omit or `true`): API/static use the **current origin** (browser → Express/Vite; server relays). Set `false` only for a static deploy that calls the boutique directly (needs CORS). |
 | `VITE_ROUTER_BASENAME` | No | Subpath if the app is hosted under a non-root URL (default `""`). |
+| `VITE_CHECKOUT_PREFETCH` | No | Enables false checkout routine. Default (`false`) |
 
 ## Local development
 
