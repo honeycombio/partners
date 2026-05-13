@@ -8,7 +8,7 @@ import { theme } from '../theme'
 
 export default function HomeScreen() {
   const api = useApi()
-  const { setCartCount } = useOutletContext()
+  const { setCartCount, showCartNotice } = useOutletContext()
   const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState([])
   const [err, setErr] = useState(null)
@@ -45,6 +45,7 @@ export default function HomeScreen() {
       .then(() => api.get('/api/v1/cart'))
       .then((c) => {
         setCartCount(/** @type {{ cart_item_count?: number }} */ (c).cart_item_count ?? 0)
+        showCartNotice?.()
       })
       .catch(() => {})
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { theme } from '../theme'
@@ -13,6 +13,29 @@ export default function MainLayout() {
   const loc = useLocation()
   const [cartCount, setCartCount] = useState(0)
   const [banner, setBanner] = useState(null)
+  const [cartNotice, setCartNotice] = useState(null)
+  const cartNoticeTimer = useRef(null)
+
+  const hideCartNotice = useCallback(() => {
+    if (cartNoticeTimer.current) {
+      clearTimeout(cartNoticeTimer.current)
+      cartNoticeTimer.current = null
+    }
+    setCartNotice(null)
+  }, [])
+
+  const showCartNotice = useCallback(() => {
+    if (cartNoticeTimer.current) {
+      clearTimeout(cartNoticeTimer.current)
+    }
+    setCartNotice({ id: Date.now() })
+    cartNoticeTimer.current = setTimeout(() => {
+      setCartNotice(null)
+      cartNoticeTimer.current = null
+    }, 5500)
+  }, [])
+
+  useEffect(() => hideCartNotice, [hideCartNotice])
 
   useEffect(() => {
     let cancelled = false
@@ -77,8 +100,25 @@ export default function MainLayout() {
       </View>
       <TabBar cartCount={cartCount} />
       <View style={styles.outlet}>
-        <Outlet context={{ cartCount, setCartCount }} />
+        <Outlet context={{ cartCount, setCartCount, showCartNotice }} />
       </View>
+      {cartNotice ? <CartNotice onClose={hideCartNotice} /> : null}
+    </View>
+  )
+}
+
+function CartNotice({ onClose }) {
+  return (
+    <View style={styles.cartNotice}>
+      <View style={styles.noticeCopy}>
+        <Text style={styles.noticeTitle}>One item has been added to the cart.</Text>
+        <Link to="/cart" onClick={onClose} style={{ textDecoration: 'none' }}>
+          <Text style={styles.noticeLink}>Proceed to checkout</Text>
+        </Link>
+      </View>
+      <Pressable onPress={onClose} style={styles.noticeClose} accessibilityLabel="Dismiss cart notice">
+        <Text style={styles.noticeCloseTxt}>×</Text>
+      </Pressable>
     </View>
   )
 }
@@ -207,6 +247,40 @@ const styles = StyleSheet.create({
     height: 40,
   },
   outlet: { flex: 1 },
+  cartNotice: {
+    position: 'fixed',
+    top: 118,
+    right: 16,
+    zIndex: 100,
+    width: 'calc(100% - 32px)',
+    maxWidth: 460,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    backgroundColor: theme.bg,
+    borderWidth: 1,
+    borderColor: theme.teal,
+    borderLeftWidth: 5,
+    borderRadius: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  noticeCopy: { flex: 1 },
+  noticeTitle: { color: theme.text, fontSize: 14, fontWeight: '600', lineHeight: 20 },
+  noticeLink: { color: theme.teal, fontSize: 14, fontWeight: '700', marginTop: 4 },
+  noticeClose: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 4,
+  },
+  noticeCloseTxt: { color: theme.control, fontSize: 22, lineHeight: 24 },
   tabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,

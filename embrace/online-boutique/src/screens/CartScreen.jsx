@@ -14,6 +14,7 @@ import { useApi, ApiError } from '../api/client'
 import { formatMoney } from '../utils/money'
 import { assetUrl } from '../utils/assets'
 import { theme } from '../theme'
+import CheckoutButton from '../components/CheckoutButton'
 
 export default function CartScreen() {
   const api = useApi()
@@ -22,6 +23,7 @@ export default function CartScreen() {
   const [cart, setCart] = useState(null)
   const [err, setErr] = useState(null)
   const [orderMsg, setOrderMsg] = useState(null)
+  const [checkoutErr, setCheckoutErr] = useState(null)
 
   const [email, setEmail] = useState('someone@example.com')
   const [street, setStreet] = useState('1600 Amphitheatre Parkway')
@@ -59,6 +61,8 @@ export default function CartScreen() {
       .del('/api/v1/cart')
       .then(() => {
         setCartCount(0)
+        setOrderMsg(null)
+        setCheckoutErr(null)
         load()
       })
       .catch(() => {})
@@ -107,6 +111,7 @@ export default function CartScreen() {
     <ScrollView style={styles.page} contentContainerStyle={{ paddingBottom: 32 }}>
       <Text style={styles.h1}>Your cart</Text>
       {err ? <Text style={styles.err}>{err}</Text> : null}
+      {checkoutErr ? <Text style={styles.checkoutErr}>{checkoutErr}</Text> : null}
       {orderMsg ? <Text style={styles.ok}>{orderMsg}</Text> : null}
 
       {emptyCart ? (
@@ -186,9 +191,22 @@ export default function CartScreen() {
           </View>
           <Labeled label="CVV" value={ccCvv} onChange={setCcCvv} />
 
-          <Pressable style={[styles.primary, submitting && styles.disabled]} onPress={placeOrder} disabled={submitting}>
-            <Text style={styles.primaryTxt}>{submitting ? 'Placing order…' : 'Place order'}</Text>
-          </Pressable>
+          <CheckoutButton
+            formState={{ email, street, zip, city, state, country, cc, ccMonth, ccYear, ccCvv }}
+            cartItems={items}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            onSuccess={(id) => {
+              setCheckoutErr(null)
+              setOrderMsg(id ? `Order placed! Confirmation #${id}` : 'Order placed!')
+              load()
+            }}
+            onError={() => {
+              setOrderMsg(null)
+              setCheckoutErr('Error: checkout could not be completed. Please review your cart and try again.')
+              load()
+            }}
+          />
         </>
       )}
     </ScrollView>
@@ -217,6 +235,7 @@ const styles = StyleSheet.create({
   h2: { fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8, color: theme.text },
   center: { padding: 32, alignItems: 'center' },
   err: { color: '#b00020', marginBottom: 8 },
+  checkoutErr: { color: '#b00020', marginBottom: 8, fontWeight: '600' },
   ok: { color: '#1b5e20', marginBottom: 8, fontWeight: '500' },
   emptyBox: { paddingVertical: 24 },
   emptyTitle: { fontSize: 18, marginBottom: 8, color: theme.text },
