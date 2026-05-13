@@ -10,7 +10,7 @@ export default function ProductScreen() {
   const { id } = useParams()
   const api = useApi()
   const nav = useNavigate()
-  const { setCartCount } = useOutletContext()
+  const { setCartCount, showCartNotice } = useOutletContext()
 
   const [loading, setLoading] = useState(true)
   const [row, setRow] = useState(null)
@@ -60,6 +60,7 @@ export default function ProductScreen() {
       .then((c) => {
         const n = /** @type {{ cart_item_count?: number }} */ (c).cart_item_count ?? 0
         setCartCount?.(n)
+        showCartNotice?.()
       })
       .catch(() => {})
   }
